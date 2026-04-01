@@ -1,0 +1,337 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    background: #f4f4f4;
+    color: #1f1f1f;
+}
+
+.page-wrapper {
+    padding: 32px 16px;
+}
+
+.container,
+.menu-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+h1 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 32px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 32px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: #fff;
+}
+
+input:focus,
+select:focus {
+    border-color: #333;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.actions,
+.category-actions,
+.top-bar,
+.top-bar-actions,
+.autosave-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.actions {
+    margin-top: 24px;
+}
+
+.top-bar {
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.autosave-bar {
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    background: #f8f8f8;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+}
+
+#autosave-status {
+    color: #555;
+    font-size: 14px;
+}
+
+button,
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+button:hover,
+.back-link:hover {
+    opacity: 0.92;
+}
+
+button:active,
+.back-link:active {
+    transform: translateY(1px);
+}
+
+.primary-btn {
+    background: #111;
+    color: #fff;
+}
+
+.secondary-btn {
+    background: #ececec;
+    color: #111;
+}
+
+.danger-btn {
+    background: #c62828;
+    color: #fff;
+}
+
+.small-btn {
+    min-width: 50px;
+    padding: 10px;
+}
+
+.back-link {
+    background: #ececec;
+    color: #111;
+}
+
+.category-card {
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+    background: #fafafa;
+}
+
+.category-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.category-header input {
+    flex: 1;
+}
+
+.dishes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dish-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 56px;
+    gap: 12px;
+    align-items: center;
+}
+
+.menu-section {
+    margin-top: 32px;
+}
+
+.menu-section h2 {
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #111;
+    font-size: 20px;
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px dotted #cccccc;
+    font-size: 16px;
+}
+
+.dish-name {
+    font-weight: 500;
+}
+
+.dish-price {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 24px 0;
+}
+
+.no-print {
+    margin-bottom: 20px;
+}
+
+.template-classic h1 {
+    font-size: 34px;
+}
+
+.template-classic .menu-section h2 {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.template-modern {
+    background: #111;
+    color: #f7f7f7;
+}
+
+.template-modern .menu-section h2 {
+    border-bottom: 2px solid #f7f7f7;
+}
+
+.template-modern .menu-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.template-modern .dish-price {
+    color: #d9d9d9;
+}
+
+.template-elegant {
+    background: #fffdf8;
+    color: #2b2118;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.template-elegant h1 {
+    letter-spacing: 1px;
+}
+
+.template-elegant .menu-section h2 {
+    border-bottom: 1px solid #2b2118;
+    font-style: italic;
+}
+
+.template-elegant .menu-item {
+    border-bottom: 1px dotted #bda98c;
+}
+
+@media print {
+    .no-print {
+        display: none;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .page-wrapper {
+        padding: 0;
+    }
+
+    .menu-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 20px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    h1 {
+        font-size: 28px;
+        margin-bottom: 24px;
+    }
+
+    .menu-section h2 {
+        font-size: 18px;
+    }
+
+    .menu-item {
+        font-size: 14px;
+        page-break-inside: avoid;
+    }
+}
+
+@media (max-width: 768px) {
+    .container,
+    .menu-container {
+        padding: 20px;
+    }
+
+    .category-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dish-row {
+        grid-template-columns: 1fr;
+    }
+
+    .small-btn {
+        width: 100%;
+    }
+
+    .top-bar,
+    .autosave-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .top-bar-actions,
+    .actions,
+    .category-actions {
+        flex-direction: column;
+    }
+
+    button,
+    .back-link {
+        width: 100%;
+    }
+}

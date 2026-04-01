@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anteprima Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="page-wrapper">
+        <div class="menu-container template-{{ template_stile }}">
+            <div class="top-bar no-print">
+                <a href="/" class="back-link">← Torna indietro</a>
+
+                <div class="top-bar-actions">
+                    <button type="button" class="secondary-btn" onclick="downloadMenuJson()">
+                        Salva JSON
+                    </button>
+                    <button type="button" class="primary-btn" onclick="window.print()">
+                        Scarica PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="menu-data-json" style="display: none;">
+                {{ {
+                    "nome_ristorante": nome_ristorante,
+                    "template_stile": template_stile,
+                    "menu": menu
+                } | tojson }}
+            </div>
+
+            <h1>{{ nome_ristorante }}</h1>
+
+            {% if menu %}
+                {% for categoria in menu %}
+                    <section class="menu-section">
+                        <h2>{{ categoria.nome }}</h2>
+
+                        {% for piatto in categoria.piatti %}
+                            <div class="menu-item">
+                                <span class="dish-name">{{ piatto.nome }}</span>
+                                <span class="dish-price">{{ piatto.prezzo }}€</span>
+                            </div>
+                        {% endfor %}
+                    </section>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <p>Non ci sono categorie o piatti validi da mostrare.</p>
+                    <a href="/" class="back-link">← Torna al form</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function downloadMenuJson() {
+            const jsonContainer = document.getElementById("menu-data-json");
+            const rawJson = jsonContainer.textContent.trim();
+            const menuData = JSON.parse(rawJson);
+
+            const jsonString = JSON.stringify(menuData, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "menu-salvato.json";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
+</body>
+</html>

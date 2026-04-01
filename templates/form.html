@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MenuFlash</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="page-wrapper">
+        <div class="container">
+            <h1>Crea il tuo menu</h1>
+            <p class="subtitle">
+                Crea, salva automaticamente e riapri i tuoi menu in pochi secondi.
+            </p>
+
+            <form method="POST" action="/generate" id="menu-form">
+                <div class="form-group">
+                    <label for="nome_ristorante">Nome ristorante</label>
+                    <input
+                        type="text"
+                        id="nome_ristorante"
+                        name="nome_ristorante"
+                        placeholder="Es. Da Guido"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="template_stile">Template menu</label>
+                    <select id="template_stile" name="template_stile">
+                        <option value="classic">Classic</option>
+                        <option value="modern">Modern</option>
+                        <option value="elegant">Elegant</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="menu-json-file">Carica un menu salvato (.json)</label>
+                    <input
+                        type="file"
+                        id="menu-json-file"
+                        accept=".json,application/json"
+                    >
+                </div>
+
+                <div class="autosave-bar">
+                    <span id="autosave-status">Bozza non ancora salvata</span>
+                    <button type="button" class="secondary-btn" onclick="clearDraft()">
+                        Cancella bozza locale
+                    </button>
+                </div>
+
+                <div id="categorie-container"></div>
+
+                <div class="actions">
+                    <button type="button" class="secondary-btn" onclick="addCategory()">
+                        + Aggiungi categoria
+                    </button>
+
+                    <button type="submit" class="primary-btn">
+                        Genera menu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DRAFT_KEY = "menuflash_draft_v1";
+        let categoryIndex = 0;
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        function updateAutosaveStatus(message) {
+            const statusElement = document.getElementById("autosave-status");
+            statusElement.textContent = message;
+        }
+
+        function createDishRow(categoryIndexValue, dishName = "", dishPrice = "") {
+            const dishRow = document.createElement("div");
+            dishRow.className = "dish-row";
+
+            dishRow.innerHTML = `
+                <input
+                    type="text"
+                    name="nome_piatto_${categoryIndexValue}[]"
+                    placeholder="Nome piatto"
+                    value="${escapeHtml(dishName)}"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="prezzo_piatto_${categoryIndexValue}[]"
+                    placeholder="Prezzo"
+                    value="${escapeHtml(dishPrice)}"
+                    required
+                >
+
+                <button type="button" class="danger-btn small-btn" onclick="removeDish(this)">
+                    X
+                </button>
+            `;
+
+            attachAutosaveListeners(dishRow);
+            return dishRow;
+        }
+
+        function createCategoryCard(categoryName = "", dishes = []) {
+            const currentIndex = categoryIndex;
+            categoryIndex += 1;
+
+            const categoryCard = document.createElement("div");
+            categoryCard.className = "category-card";
+            categoryCard.dataset.categoryIndex = currentIndex;
+
+            categoryCard.innerHTML = `
+                <div class="category-header">
+                    <input
+                        type="text"
+                        name="categoria_nome[]"
+                        placeholder="Nome categoria (es. Antipasti)"
+                        value="${escapeHtml(categoryName)}"
+                        required
+                    >
+
+                    <button type="button" class="danger-btn" onclick="removeCategory(this)">
+                        Rimuovi categoria
+                    </button>
+                </div>
+
+                <div class="dishes-container"></div>
+
+                <div class="category-actions">
+                    <button type="button" class="secondary-btn" onclick="addDish(this)">
+                        + Aggiungi piatto
+                    </button>
+                </div>
+            `;
+
+            const dishesContainer = categoryCard.querySelector(".dishes-container");
+
+            if (dishes.length > 0) {
+                dishes.forEach(dish => {
+                    dishesContainer.appendChild(
+                        createDishRow(
+                            currentIndex,
+                            dish.nome || "",
+                            dish.prezzo || ""
+                        )
+                    );
+                });
+            } else {
+                dishesContainer.appendChild(createDishRow(currentIndex));
+            }
+
+            attachAutosaveListeners(categoryCard);
+            return categoryCard;
+        }
+
+        function addCategory(categoryName = "", dishes = []) {
+            const categoriesContainer = document.getElementById("categorie-container");
+            const categoryCard = createCategoryCard(categoryName, dishes);
+            categoriesContainer.appendChild(categoryCard);
+            saveDraft();
+        }
+
+        function addDish(button) {
+            const categoryCard = button.closest(".category-card");
+            const dishesContainer = categoryCard.querySelector(".dishes-container");
+            const categoryIndexValue = categoryCard.dataset.categoryIndex;
+
+            dishesContainer.appendChild(createDishRow(categoryIndexValue));
+            saveDraft();
+        }
+
+        function removeDish(button) {
+            const confirmDelete = confirm("Vuoi davvero eliminare questo piatto?");
+
+            if (!confirmDelete) {
+                return;
+            }
+
+            const dishRow = button.closest(".dish-row");
+            const dishesContainer = dishRow.parentElement;
+
+            if (dishesContainer.children.length === 1) {
+                alert("Ogni categoria deve avere almeno un piatto.");
+                return;
+            }
+
+            dishRow.remove();
+            saveDraft();
+        }
+
+        function removeCategory(button) {
+            const confirmDelete = confirm("Vuoi davvero eliminare tutta la categoria?");
+
+            if (!confirmDelete) {
+                return;
+            }
+
+            const categoryCard = button.closest(".category-card");
+            const categoriesContainer = document.getElementById("categorie-container");
+
+            if (categoriesContainer.children.length === 1) {
+                alert("Deve esserci almeno una categoria.");
+                return;
+            }
+
+            categoryCard.remove();
+            saveDraft();
+        }
+
+        function resetMenuArea() {
+            const categoriesContainer = document.getElementById("categorie-container");
+            categoriesContainer.innerHTML = "";
+            categoryIndex = 0;
+        }
+
+        function getDraftData() {
+            const restaurantName = document.getElementById("nome_ristorante").value.trim();
+            const templateStyle = document.getElementById("template_stile").value;
+
+            const categoryCards = document.querySelectorAll(".category-card");
+            const menu = [];
+
+            categoryCards.forEach(categoryCard => {
+                const categoryNameInput = categoryCard.querySelector('input[name="categoria_nome[]"]');
+                const dishRows = categoryCard.querySelectorAll(".dish-row");
+
+                const categoryName = categoryNameInput ? categoryNameInput.value.trim() : "";
+                const dishes = [];
+
+                dishRows.forEach(dishRow => {
+                    const dishInputs = dishRow.querySelectorAll("input");
+                    const dishName = dishInputs[0]?.value.trim() || "";
+                    const dishPrice = dishInputs[1]?.value.trim() || "";
+
+                    if (dishName || dishPrice) {
+                        dishes.push({
+                            nome: dishName,
+                            prezzo: dishPrice
+                        });
+                    }
+                });
+
+                if (categoryName || dishes.length > 0) {
+                    menu.push({
+                        nome: categoryName,
+                        piatti: dishes
+                    });
+                }
+            });
+
+            return {
+                nome_ristorante: restaurantName,
+                template_stile: templateStyle,
+                menu: menu
+            };
+        }
+
+        function saveDraft() {
+            const draftData = getDraftData();
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+
+            const now = new Date();
+            const timeLabel = now.toLocaleTimeString("it-IT", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+            updateAutosaveStatus(`Bozza salvata automaticamente alle ${timeLabel}`);
+        }
+
+        function loadDraftData(data) {
+            if (!data || typeof data !== "object") {
+                return;
+            }
+
+            document.getElementById("nome_ristorante").value = data.nome_ristorante || "";
+            document.getElementById("template_stile").value = data.template_stile || "classic";
+
+            resetMenuArea();
+
+            const menu = Array.isArray(data.menu) ? data.menu : [];
+
+            if (menu.length === 0) {
+                addCategory();
+                return;
+            }
+
+            menu.forEach(category => {
+                addCategory(
+                    category.nome || "",
+                    Array.isArray(category.piatti) ? category.piatti : []
+                );
+            });
+
+            updateAutosaveStatus("Bozza recuperata con successo");
+        }
+
+        function loadDraftFromLocalStorage() {
+            const rawDraft = localStorage.getItem(DRAFT_KEY);
+
+            if (!rawDraft) {
+                addCategory();
+                return;
+            }
+
+            try {
+                const draftData = JSON.parse(rawDraft);
+                loadDraftData(draftData);
+            } catch (error) {
+                console.error(error);
+                addCategory();
+            }
+        }
+
+        function clearDraft() {
+            const confirmClear = confirm("Vuoi cancellare la bozza salvata nel browser?");
+
+            if (!confirmClear) {
+                return;
+            }
+
+            localStorage.removeItem(DRAFT_KEY);
+            resetMenuArea();
+            document.getElementById("nome_ristorante").value = "";
+            document.getElementById("template_stile").value = "classic";
+            addCategory();
+            updateAutosaveStatus("Bozza locale cancellata");
+        }
+
+        function handleJsonUpload(event) {
+            const file = event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    loadDraftData(data);
+                    saveDraft();
+                } catch (error) {
+                    alert("Impossibile leggere il file JSON.");
+                    console.error(error);
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function attachAutosaveListeners(container) {
+            const fields = container.querySelectorAll("input, select, textarea");
+
+            fields.forEach(field => {
+                field.addEventListener("input", saveDraft);
+                field.addEventListener("change", saveDraft);
+            });
+        }
+
+        document
+            .getElementById("menu-json-file")
+            .addEventListener("change", handleJsonUpload);
+
+        document
+            .getElementById("template_stile")
+            .addEventListener("change", saveDraft);
+
+        window.addEventListener("DOMContentLoaded", () => {
+            attachAutosaveListeners(document);
+            loadDraftFromLocalStorage();
+        });
+    </script>
+
+</body>
+</html>
